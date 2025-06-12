@@ -21,6 +21,7 @@ import com.example.telemoney.Adpater.IngresoAdapter;
 import com.example.telemoney.Model.Ingreso;
 import com.example.telemoney.Repository.IngresoRepository;
 import com.example.telemoney.databinding.ActivityIngresoBinding;
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
@@ -58,12 +59,18 @@ public class IngresoActivity extends AppCompatActivity {
                         .setTitle("¿Cerrar sesión?")
                         .setMessage("¿Estás segura de que deseas cerrar sesión?")
                         .setPositiveButton("Sí", (dialog, which) -> {
-                            // Aquí puedes agregar lógica de logout real si tienes FirebaseAuth, etc.
-                            Intent intent = new Intent(this, LoginActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                            overridePendingTransition(0, 0);
-                            finish();
+                            AuthUI.getInstance()
+                                    .signOut(this)
+                                    .addOnCompleteListener(task -> {
+                                        Log.d("Logout", "Sesión cerrada exitosamente");
+                                        Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show();
+
+                                        Intent intent = new Intent(this, LoginActivity.class);
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                        startActivity(intent);
+                                        overridePendingTransition(0, 0);
+                                        finish();
+                                    });
                         })
                         .setNegativeButton("Cancelar", null)
                         .show();

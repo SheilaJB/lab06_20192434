@@ -23,6 +23,7 @@ import com.example.telemoney.Model.Egreso;
 import com.example.telemoney.Model.Ingreso;
 import com.example.telemoney.Repository.EgresoRepository;
 import com.example.telemoney.databinding.ActivityEgresoBinding;
+import com.firebase.ui.auth.AuthUI;
 
 import java.util.ArrayList;
 
@@ -55,12 +56,13 @@ public class EgresoActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0);
                 finish();
                 return true;
-            } else if (itemId == R.id.nav_logout) {
+            }else if (itemId == R.id.nav_logout) {
                 new AlertDialog.Builder(this)
                         .setTitle("¿Cerrar sesión?")
                         .setMessage("¿Estás segura de que deseas cerrar sesión?")
                         .setPositiveButton("Sí", (dialog, which) -> {
-                            // Aquí puedes agregar lógica de logout real si tienes FirebaseAuth, etc.
+                            AuthUI.getInstance().signOut(this);
+
                             Intent intent = new Intent(this, LoginActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
