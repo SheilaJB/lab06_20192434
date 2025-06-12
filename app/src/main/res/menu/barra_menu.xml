@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- Menú del app -->
+    <item
+        android:id="@+id/nav_ingresos"
+        android:title="Ingresos"
+        android:icon="@drawable/ic_trendup"
+        app:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/nav_egresos"
+        android:title="Egresos"
+        android:icon="@drawable/ic_trenddown"
+        app:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/nav_resumen"
+        android:title="Resumen"
+        android:icon="@drawable/ic_bar"
+        app:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/nav_logout"
+        android:title="Cerrar Sesión"
+        android:icon="@drawable/ic_logout"
+        app:showAsAction="ifRoom"
+        />
+</menu>
