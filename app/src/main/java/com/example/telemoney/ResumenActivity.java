@@ -31,6 +31,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.google.firebase.auth.FirebaseAuth;
 
 
 import java.text.SimpleDateFormat;
@@ -68,13 +69,16 @@ public class ResumenActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0); // sin animación
                 finish();
                 return true;
-            } else if (itemId == R.id.nav_logout) {
+            }else if (itemId == R.id.nav_logout) {
                 new AlertDialog.Builder(this)
                         .setTitle("¿Cerrar sesión?")
                         .setMessage("¿Estás segura de que deseas cerrar sesión?")
                         .setPositiveButton("Sí", (dialog, which) -> {
-                            // Aquí puedes agregar lógica de logout real si tienes FirebaseAuth, etc.
-                            Intent intent = new Intent(this, LoginActivity.class);
+                            // Cierre de sesión real con FirebaseAuth
+                            FirebaseAuth.getInstance().signOut();
+
+                            // Ir a LoginActivity y limpiar el back stack
+                            Intent intent = new Intent(ResumenActivity.this, LoginActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             overridePendingTransition(0, 0);
@@ -82,9 +86,9 @@ public class ResumenActivity extends AppCompatActivity {
                         })
                         .setNegativeButton("Cancelar", null)
                         .show();
+
                 return true;
             }
-
 
             return false;
         });
