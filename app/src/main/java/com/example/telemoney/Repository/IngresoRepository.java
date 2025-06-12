@@ -166,13 +166,5 @@ public class IngresoRepository {
             failure.onFailure(e);
         }
     }
-    public boolean isUsuarioAutenticado() {
-        return auth.getCurrentUser() != null;
-    }
-    public String obtenerEmailUsuario() {
-        FirebaseUser currentUser = auth.getCurrentUser();
-        return currentUser != null ? currentUser.getEmail() : null;
-    }
-
 }
 

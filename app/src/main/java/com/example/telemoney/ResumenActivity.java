@@ -236,25 +236,6 @@ public class ResumenActivity extends AppCompatActivity {
         return false;
     }
 
-
-    private void procesarDatosFiltrados(List<Ingreso> ingresos, List<Egreso> egresos) {
-
-        double totalMontoIngresos = calcularTotalIngresos(ingresos);
-        double totalMontoEgresos = calcularTotalEgresos(egresos);
-        double consolidado = totalMontoIngresos + totalMontoEgresos;
-
-        float porcentajeIngresos = 0f;
-        float porcentajeEgresos = 0f;
-
-        if (totalMontoIngresos > 0) {
-            porcentajeIngresos = (float) ((totalMontoIngresos * 100.0) / (totalMontoIngresos + totalMontoEgresos));
-            porcentajeEgresos = (float) ((totalMontoEgresos * 100.0) / (totalMontoIngresos + totalMontoEgresos));
-        }
-        actualizarPieChart(porcentajeIngresos, porcentajeEgresos, totalMontoIngresos, totalMontoEgresos);
-        actualizarBarChart(totalMontoIngresos, totalMontoEgresos, consolidado);
-        Log.d(TAG, "Datos procesados - Ingresos: $" + totalMontoIngresos + " (" + porcentajeIngresos + "%), " +
-                "Egresos: $" + totalMontoEgresos + " (" + porcentajeEgresos + "%)");
-    }
     private void actualizarPieChart(float porcentajeIngresos, float porcentajeEgresos, double montoIngresos, double montoEgresos) {
         PieChart pieChart = binding.pieChart;
         List<PieEntry> entries = new ArrayList<>();

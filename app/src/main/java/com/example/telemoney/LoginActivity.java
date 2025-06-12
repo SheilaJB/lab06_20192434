@@ -49,11 +49,6 @@ public class LoginActivity extends AppCompatActivity {
     }
     private void configurarBotones() {
         binding.LoginButton.setOnClickListener(view -> iniciarAutenticacionFirebaseUI());
-
-        binding.alreadyAccountButton.setOnClickListener(view -> {
-            Intent intent = new Intent(LoginActivity.this, IngresoActivity.class);
-            startActivity(intent);
-        });
     }
     private void iniciarAutenticacionFirebaseUI() {
         Log.d(TAG, "Iniciando autenticación con FirebaseUI");

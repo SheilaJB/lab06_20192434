@@ -77,6 +77,12 @@
             app:iconGravity="start"
             app:cornerRadius="12dp"
             style="@style/Widget.Material3.Button" />
+        <!-- Separador visual -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="32dp"
+            android:background="@color/md_theme_outline" />
 
         <!-- Botón Google -->
         <com.google.android.material.button.MaterialButton
@@ -92,22 +98,21 @@
             app:cornerRadius="12dp"
             style="@style/Widget.Material3.Button.OutlinedButton" />
 
-        <!-- Separador visual -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="32dp"
-            android:background="@color/md_theme_outline" />
-
-        <!-- Botón de acceso directo (solo para testing) -->
+        <!-- Botón Google -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/alreadyAccountButton"
+            android:id="@+id/facebookLoginButton"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="Acceder sin autenticación (Demo)"
-            android:textSize="14sp"
-            android:textColor="@color/md_theme_primary"
-            style="@style/Widget.Material3.Button.TextButton" />
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="Iniciar con Facebook"
+            android:textSize="16sp"
+            app:icon="@drawable/ic_facebook"
+            app:iconPadding="12dp"
+            app:iconGravity="start"
+            app:cornerRadius="12dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+
 
     </LinearLayout>
 
