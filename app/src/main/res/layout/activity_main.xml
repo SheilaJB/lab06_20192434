@@ -5,15 +5,125 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:background="@color/md_theme_surface"
+    tools:context=".LoginActivity">
 
+    <!-- Título principal -->
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/titleTextView"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginTop="80dp"
+        android:text="Bienvenido a TeleMoney"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_onSurface"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Subtítulo -->
+    <TextView
+        android:id="@+id/subtitleTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginTop="8dp"
+        android:text="Controla tus finanzas personales"
+        android:textSize="16sp"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView" />
+
+    <!-- Logo -->
+    <ImageView
+        android:id="@+id/logoImageView"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginTop="40dp"
+        android:src="@drawable/logo"
+        android:contentDescription="Logo de TeleMoney"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/subtitleTextView" />
+
+    <!-- Contenedor de botones -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginTop="50dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/logoImageView">
+
+        <!-- Botón Email/Password -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/emailLoginButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Iniciar con Email"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            app:icon="@drawable/ic_email"
+            app:iconTint="@color/white"
+            app:iconPadding="12dp"
+            app:iconGravity="start"
+            app:cornerRadius="12dp"
+            style="@style/Widget.Material3.Button" />
+
+        <!-- Botón Google -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/googleLoginButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="Iniciar con Google"
+            android:textSize="16sp"
+            app:icon="@drawable/ic_google"
+            app:iconPadding="12dp"
+            app:iconGravity="start"
+            app:cornerRadius="12dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <!-- Separador visual -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="32dp"
+            android:background="@color/md_theme_outline" />
+
+        <!-- Botón de acceso directo (solo para testing) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/alreadyAccountButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Acceder sin autenticación (Demo)"
+            android:textSize="14sp"
+            android:textColor="@color/md_theme_primary"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+    </LinearLayout>
+
+    <!-- Texto informativo -->
+    <TextView
+        android:id="@+id/infoTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginBottom="32dp"
+        android:text="Al iniciar sesión, aceptas nuestros términos y condiciones"
+        android:textSize="12sp"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

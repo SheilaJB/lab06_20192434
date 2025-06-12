@@ -7,67 +7,108 @@
     android:layout_height="match_parent"
     tools:context=".LoginActivity">
 
+    <!-- Título principal -->
     <TextView
         android:id="@+id/titleTextView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:text="Inicio de sesión"
-        android:textSize="24sp"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginTop="80dp"
+        android:text="Bienvenido a TeleMoney"
+        android:textSize="28sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
+        android:textColor="@color/md_theme_onSurface"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintVertical_bias="0.1"
-        android:gravity="center" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Subtítulo -->
+    <TextView
+        android:id="@+id/subtitleTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginTop="8dp"
+        android:text="Controla tus finanzas personales"
+        android:textSize="16sp"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView" />
 
     <ImageView
         android:id="@+id/logoImageView"
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:src="@drawable/logo"
-        app:layout_constraintBottom_toTopOf="@id/emailLoginButton"
+        app:layout_constraintBottom_toTopOf="@id/LoginButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
 
-    <Button
-        android:id="@+id/emailLoginButton"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/LoginButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:text="Iniciar con correo"
-        app:layout_constraintBottom_toTopOf="@id/googleLoginButton"
+        android:text="Iniciar sesión"
+        android:padding="12dp"
+        app:iconGravity="start"
+        app:cornerRadius="8dp"
+        app:layout_constraintBottom_toTopOf="@id/alreadyAccountButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/logoImageView"
-        app:layout_constraintWidth_percent="0.7" />
-
-    <Button
+        app:layout_constraintWidth_percent="0.8" />
+<!--
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/googleLoginButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Iniciar con Google"
-        app:layout_constraintBottom_toTopOf="@id/alreadyAccountButton"
+        android:padding="12dp"
+        app:icon="@drawable/ic_google"
+        app:iconGravity="start"
+        app:cornerRadius="8dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/emailLoginButton"
-        app:layout_constraintWidth_percent="0.7" />
+        app:layout_constraintWidth_percent="0.8" />
 
-    <Button
-        android:id="@+id/alreadyAccountButton"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/facebookLoginButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Tengo cuenta"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="16dp"
+        android:text="Iniciar con Facebook"
+        android:padding="12dp"
+        app:icon="@drawable/ic_facebook"
+        app:iconGravity="start"
+        app:cornerRadius="8dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/googleLoginButton"
-        app:layout_constraintWidth_percent="0.7" />
+        app:layout_constraintWidth_percent="0.8" />
+-->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/alreadyAccountButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="24dp"
+        android:text="Ya tengo una cuenta"
+        android:textAllCaps="false"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/LoginButton"
+        app:layout_constraintWidth_percent="0.8" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
