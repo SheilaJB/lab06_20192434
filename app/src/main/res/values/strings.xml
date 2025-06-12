@@ -2,8 +2,9 @@
     <string name="app_name">TeleMoney</string>
     <string name="fui_idp_name_google">Acceder con Google</string>
     <string name="fui_idp_name_facebook">Acceder con Facebook</string>
-    <string name="fui_idp_name_twitter">Acceder con Twitter</string>
-    <string name="fui_idp_name_github">Acceder con GitHub</string>
-    <string name="fui_idp_name_phone">Acceder con Phone</string>
-    <string name="fui_idp_name_email">Acceder con Email</string>
+
+    <!-- Cambiar facebook_app_id por facebook_application_id -->
+    <string name="facebook_application_id">752831583832042</string>
+    <string name="fb_login_protocol_scheme">fb752831583832042</string>
+    <string name="facebook_client_token">df63031817741cefb11c1e0051e3b1f6</string>
 </resources>

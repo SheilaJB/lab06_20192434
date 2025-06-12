@@ -9,6 +9,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.telemoney.databinding.ActivityLoginBinding;
+import com.facebook.CallbackManager;
+import com.facebook.login.widget.LoginButton;
 import com.firebase.ui.auth.AuthMethodPickerLayout;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
@@ -24,6 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     ActivityLoginBinding binding;
     private final static String TAG = "msg-test";
     private FirebaseAuth firebaseAuth;
+    // Facebook
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +41,6 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
             if (currentUser.isEmailVerified()) {
-                Log.d(TAG, "Usuario ya autenticado: " + currentUser.getUid());
                 goToMainActivity();
             } else {
                 Log.d(TAG, "Usuario no verificado, debe verificar email");
@@ -49,6 +51,7 @@ public class LoginActivity extends AppCompatActivity {
     }
     private void configurarBotones() {
         binding.LoginButton.setOnClickListener(view -> iniciarAutenticacionFirebaseUI());
+
     }
     private void iniciarAutenticacionFirebaseUI() {
         Log.d(TAG, "Iniciando autenticación con FirebaseUI");
@@ -56,11 +59,13 @@ public class LoginActivity extends AppCompatActivity {
 
         List<AuthUI.IdpConfig> providers = Arrays.asList(
                 new AuthUI.IdpConfig.EmailBuilder().build(),
-                new AuthUI.IdpConfig.GoogleBuilder().build()
+                new AuthUI.IdpConfig.GoogleBuilder().build(),
+               new AuthUI.IdpConfig.FacebookBuilder().build()
         );
         AuthMethodPickerLayout customLayout = new AuthMethodPickerLayout.Builder(R.layout.activity_main)
                 .setGoogleButtonId(R.id.googleLoginButton)
                 .setEmailButtonId(R.id.emailLoginButton)
+                .setFacebookButtonId(R.id.facebookLoginButton)
                 .build();
 
         Intent intent = AuthUI.getInstance()
