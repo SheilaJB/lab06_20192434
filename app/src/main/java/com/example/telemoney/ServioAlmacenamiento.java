@@ -48,6 +48,10 @@ public class ServioAlmacenamiento {
         ref.getDownloadUrl().addOnSuccessListener(success).addOnFailureListener(failure);
     }
     // Eliminar comprobante de ingresos/egresos en una ruta específica
+    /*
+    * Este metodo no era obligatorio, pero lo hice para que no se me sature de imagenes en el storage
+    * asi que cuando se borre un ingreso o egreso, tambien se deberia borrar su imagen correspondiente
+    * */
     public void eliminarArchivo(String nombre, OnSuccessListener<Void> success, OnFailureListener failure) {
         StorageReference ref = storage.getReference().child("comprobantes").child(nombre);
         ref.delete().addOnSuccessListener(success).addOnFailureListener(failure);
