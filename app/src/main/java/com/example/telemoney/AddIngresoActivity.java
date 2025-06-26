@@ -2,10 +2,17 @@ package com.example.telemoney;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.ParseException;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -15,6 +22,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.telemoney.Model.Ingreso;
 import com.example.telemoney.Repository.IngresoRepository;
 import com.example.telemoney.databinding.ActivityAddIngresoBinding;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -23,13 +33,24 @@ import java.util.Locale;
 
 public class AddIngresoActivity extends AppCompatActivity {
     private IngresoRepository ingresoRepository;
+    private ServioAlmacenamiento servicioAlmacenamiento;
     ActivityAddIngresoBinding binding;
     private final static String TAG = "AddIngresoActivity";
+    private Uri imagenSeleccionadaUri;
+    private MaterialCardView cardImagenPreview;
+    private ImageView imageViewPreview;
+    private FloatingActionButton fabRemoveImage;
+    private TextView textViewImagenNombre;
+    private LinearLayout layoutUploadStatus;
+    private TextView textViewUploadStatus;
+    private static final int PICK_IMAGE_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAddIngresoBinding.inflate(getLayoutInflater());
+        servicioAlmacenamiento = new ServioAlmacenamiento();
+        servicioAlmacenamiento.conectarServicio();
         setContentView(binding.getRoot());
         // Toolbar
         setSupportActionBar(binding.toolbar);
@@ -39,6 +60,71 @@ public class AddIngresoActivity extends AppCompatActivity {
         ingresoRepository = new IngresoRepository();
         configurarFormulario();
         configurarBotones();
+        inicializarVistaImagen();
+    }
+
+    private void inicializarVistaImagen() {
+        cardImagenPreview = binding.cardImagenPreview;
+        imageViewPreview = binding.imageViewPreview;
+        fabRemoveImage = binding.fabRemoveImage;
+        textViewImagenNombre = binding.textViewImagenNombre;
+        layoutUploadStatus = binding.layoutUploadStatus;
+        textViewUploadStatus = binding.textViewUploadStatus;
+
+        // Configurar visibilidad inicial
+        binding.buttonSeleccionarImagen.setOnClickListener(v -> abrirSelectorImagen());
+
+        // Configurar botón de eliminar imagen
+        fabRemoveImage.setOnClickListener(v -> {
+            imagenSeleccionadaUri = null;
+            cardImagenPreview.setVisibility(View.GONE);
+            binding.buttonSeleccionarImagen.setText("Seleccionar Comprobante");
+        });
+    }
+    private void abrirSelectorImagen() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
+            imagenSeleccionadaUri = data.getData();
+            if (imagenSeleccionadaUri != null) {
+                mostrarImagenSeleccionada();
+            }
+        }
+    }
+
+    private void mostrarImagenSeleccionada() {
+        imageViewPreview.setImageURI(imagenSeleccionadaUri);
+        textViewImagenNombre.setText(getFileName(imagenSeleccionadaUri));
+        cardImagenPreview.setVisibility(View.VISIBLE);
+        binding.buttonSeleccionarImagen.setText("📸 Cambiar Comprobante");
+    }
+
+    private String getFileName(Uri uri) {
+        String result = "comprobante.jpg";
+        if (uri != null && "content".equals(uri.getScheme())) {
+            Cursor cursor = null;
+            try {
+                cursor = getContentResolver().query(uri, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex >= 0) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error al obtener nombre del archivo", e);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -106,10 +192,15 @@ public class AddIngresoActivity extends AppCompatActivity {
             binding.editTextFecha.requestFocus();
             return false;
         }
+        // Validar imagen seleccionada
+        if (imagenSeleccionadaUri == null) {
+            Toast.makeText(this, "El comprobante es obligatorio", Toast.LENGTH_LONG).show();
+            binding.buttonSeleccionarImagen.requestFocus();
+            return false;
+        }
 
         return true;
     }
-
     private void guardarNuevoIngreso() {
         Log.d(TAG, "Inicio de guardarNuevoIngreso()");
 
@@ -118,34 +209,70 @@ public class AddIngresoActivity extends AppCompatActivity {
         String descripcion = binding.editTextDescripcion.getText().toString().trim();
         String fecha = binding.editTextFecha.getText().toString().trim();
 
-        Log.d(TAG, "Datos ingresados -> Titulo: " + titulo + ", Monto: " + monto + ", Desc: " + descripcion + ", Fecha: " + fecha);
+        layoutUploadStatus.setVisibility(View.VISIBLE);
+        textViewUploadStatus.setText("Subiendo comprobante...");
+        binding.buttonGuardar.setEnabled(false);
 
         ingresoRepository.generarNuevoId(id -> {
             Log.d(TAG, "ID generado por el repositorio: " + id);
 
-            Ingreso nuevoIngreso = new Ingreso(id, titulo, monto, descripcion, fecha);
+            String nombreArchivo = "comprobante_" + id + "_" + System.currentTimeMillis() + ".jpg";
+            Log.d(TAG, "Nombre del archivo generado: " + nombreArchivo);
+            servicioAlmacenamiento.guardarArchivo(imagenSeleccionadaUri, nombreArchivo, task -> {
+                if (task.isSuccessful()) {
+                    Log.d(TAG, "Archivo subido exitosamente: " + nombreArchivo);
+                    textViewUploadStatus.setText("Obteniendo enlace...");
 
-            ingresoRepository.guardarIngreso(nuevoIngreso,
-                    unused -> {
-                        Log.d(TAG, "Ingreso guardado exitosamente");
-                        Toast.makeText(this, "Ingreso guardado exitosamente", Toast.LENGTH_SHORT).show();
+                    servicioAlmacenamiento.obtenerArchivo(nombreArchivo, uri -> {
+                        String urlComprobante = uri.toString();
+                        Log.d(TAG, "URL del comprobante obtenida: " + urlComprobante);
 
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra("nuevo_ingreso", nuevoIngreso);
-                        setResult(RESULT_OK, resultIntent);
-                        finish();
-                    },
-                    e -> {
-                        Log.e(TAG, "Error al guardar ingreso", e);
-                        Toast.makeText(this, "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        textViewUploadStatus.setText("Guardando ingreso...");
+
+                        Ingreso nuevoIngreso = new Ingreso(id, titulo, monto, descripcion, fecha);
+                        nuevoIngreso.setComprobanteUrl(urlComprobante);
+                        nuevoIngreso.setComprobanteNombre(nombreArchivo);
+
+                        Log.d(TAG, "Guardando ingreso con comprobante - URL: " + urlComprobante + ", Nombre: " + nombreArchivo);
+                        ingresoRepository.guardarIngreso(nuevoIngreso,
+                                unused -> {
+                                    Log.d(TAG, "Ingreso guardado exitosamente en Firestore");
+                                    layoutUploadStatus.setVisibility(View.GONE);
+                                    binding.buttonGuardar.setEnabled(true);
+                                    Toast.makeText(this, "✅ Ingreso guardado exitosamente", Toast.LENGTH_SHORT).show();
+                                    Intent resultIntent = new Intent();
+                                    resultIntent.putExtra("nuevo_ingreso", nuevoIngreso);
+                                    setResult(RESULT_OK, resultIntent);
+                                    finish();
+                                },
+                                e -> {
+                                    Log.e(TAG, "Error al guardar ingreso en Firestore", e);
+                                    layoutUploadStatus.setVisibility(View.GONE);
+                                    binding.buttonGuardar.setEnabled(true);
+                                    Toast.makeText(this, "Error al guardar ingreso: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+
+                    }, e -> {
+                        Log.e(TAG, "Error al obtener URL de descarga", e);
+                        layoutUploadStatus.setVisibility(View.GONE);
+                        binding.buttonGuardar.setEnabled(true);
+                        Toast.makeText(this, "Error al obtener URL de comprobante: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
 
+                } else {
+                    Log.e(TAG, "Error al subir imagen", task.getException());
+                    layoutUploadStatus.setVisibility(View.GONE);
+                    binding.buttonGuardar.setEnabled(true);
+                    Toast.makeText(this, "Error al subir comprobante: " + (task.getException() != null ? task.getException().getMessage() : "Error desconocido"), Toast.LENGTH_LONG).show();
+                }
+            });
         }, e -> {
             Log.e(TAG, "Error al generar ID", e);
-            Toast.makeText(this, "Error al generar ID", Toast.LENGTH_SHORT).show();
+            layoutUploadStatus.setVisibility(View.GONE);
+            binding.buttonGuardar.setEnabled(true);
+            Toast.makeText(this, "Error al generar ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
-
     private void mostrarSelectorFecha() {
         Calendar calendar = Calendar.getInstance();
 

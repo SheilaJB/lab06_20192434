@@ -2,10 +2,17 @@ package com.example.telemoney;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.ParseException;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -19,6 +26,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.telemoney.Model.Egreso;
 import com.example.telemoney.Repository.EgresoRepository;
 import com.example.telemoney.databinding.ActivityAddEgresoBinding;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,16 +35,26 @@ import java.util.Date;
 import java.util.Locale;
 
 public class AddEgresoActivity extends AppCompatActivity {
+
     ActivityAddEgresoBinding binding;
     private final static String TAG = "AddEgresoActivity";
     private EgresoRepository egresoRepository;
-
+    private ServioAlmacenamiento servicioAlmacenamiento;
+    private Uri imagenSeleccionadaUri;
+    private MaterialCardView cardImagenPreview;
+    private ImageView imageViewPreview;
+    private FloatingActionButton fabRemoveImage;
+    private TextView textViewImagenNombre;
+    private LinearLayout layoutUploadStatus;
+    private TextView textViewUploadStatus;
+    private static final int PICK_IMAGE_REQUEST = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAddEgresoBinding.inflate(getLayoutInflater());
+        servicioAlmacenamiento = new ServioAlmacenamiento();
+        servicioAlmacenamiento.conectarServicio();
         setContentView(binding.getRoot());
-        // Toolbar
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -43,7 +62,71 @@ public class AddEgresoActivity extends AppCompatActivity {
         egresoRepository = new EgresoRepository();
         configurarFormulario();
         configurarBotones();
+        inicializarVistaImagen();
     }
+    private void inicializarVistaImagen() {
+        cardImagenPreview = binding.cardImagenPreview;
+        imageViewPreview = binding.imageViewPreview;
+        fabRemoveImage = binding.fabRemoveImage;
+        textViewImagenNombre = binding.textViewImagenNombre;
+        layoutUploadStatus = binding.layoutUploadStatus;
+        textViewUploadStatus = binding.textViewUploadStatus;
+
+        binding.buttonSeleccionarImagen.setOnClickListener(v -> abrirSelectorImagen());
+
+        fabRemoveImage.setOnClickListener(v -> {
+            imagenSeleccionadaUri = null;
+            cardImagenPreview.setVisibility(View.GONE);
+            binding.buttonSeleccionarImagen.setText("Seleccionar Comprobante");
+        });
+    }
+    private void abrirSelectorImagen() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
+            imagenSeleccionadaUri = data.getData();
+            if (imagenSeleccionadaUri != null) {
+                mostrarImagenSeleccionada();
+            }
+        }
+    }
+
+    private void mostrarImagenSeleccionada() {
+        imageViewPreview.setImageURI(imagenSeleccionadaUri);
+        textViewImagenNombre.setText(getFileName(imagenSeleccionadaUri));
+        cardImagenPreview.setVisibility(View.VISIBLE);
+        binding.buttonSeleccionarImagen.setText("Cambiar Comprobante");
+    }
+
+    private String getFileName(Uri uri) {
+        String result = "comprobante.jpg";
+        if (uri != null && "content".equals(uri.getScheme())) {
+            Cursor cursor = null;
+            try {
+                cursor = getContentResolver().query(uri, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex >= 0) {
+                        result = cursor.getString(nameIndex);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error al obtener nombre del archivo", e);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return result;
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
@@ -64,7 +147,7 @@ public class AddEgresoActivity extends AppCompatActivity {
     private void configurarBotones() {
         binding.buttonGuardar.setOnClickListener(view -> {
             if (validarCampos()) {
-                guardarNuevoEngreso();
+                guardarNuevoEgreso();
             }
         });
 
@@ -109,50 +192,92 @@ public class AddEgresoActivity extends AppCompatActivity {
             binding.editTextFecha.requestFocus();
             return false;
         }
+        if (imagenSeleccionadaUri == null) {
+            Toast.makeText(this, "El comprobante es obligatorio", Toast.LENGTH_LONG).show();
+            binding.buttonSeleccionarImagen.requestFocus();
+            return false;
+        }
         return true;
     }
-    private void guardarNuevoEngreso() {
+    private void guardarNuevoEgreso() {
+        Log.d(TAG, "Inicio de guardarNuevoEgreso()");
+
         String titulo = binding.editTextTitulo.getText().toString().trim();
         double monto = Double.parseDouble(binding.editTextMonto.getText().toString().trim());
         String descripcion = binding.editTextDescripcion.getText().toString().trim();
         String fecha = binding.editTextFecha.getText().toString().trim();
 
-        Log.d(TAG, "Datos ingresados -> Titulo: " + titulo + ", Monto: " + monto + ", Desc: " + descripcion + ", Fecha: " + fecha);
+        layoutUploadStatus.setVisibility(View.VISIBLE);
+        textViewUploadStatus.setText("Subiendo comprobante...");
+        binding.buttonGuardar.setEnabled(false);
 
-        EgresoRepository repo = new EgresoRepository();
+        egresoRepository.generarNuevoId(id -> {
+            Log.d(TAG, "ID generado: " + id);
 
-        // Paso 1: Generar nuevo ID
-        repo.generarNuevoId(id -> {
-            Log.d(TAG, "ID generado por el repositorio: " + id);
+            String nombreArchivo = "comprobante_egreso_" + id + "_" + System.currentTimeMillis() + ".jpg";
+            Log.d(TAG, "Nombre del archivo: " + nombreArchivo);
 
-            Egreso nuevoEgreso = new Egreso(id, titulo, monto, descripcion, fecha);
+            servicioAlmacenamiento.guardarArchivo(imagenSeleccionadaUri, nombreArchivo, task -> {
+                if (task.isSuccessful()) {
+                    Log.d(TAG, "Comprobante subido exitosamente");
+                    textViewUploadStatus.setText("Obteniendo enlace...");
 
-            // Paso 2: Guardar en Firestore
-            repo.guardarEgreso(nuevoEgreso,
-                    unused -> {
-                        Log.d(TAG, "Egreso guardado exitosamente");
+                    servicioAlmacenamiento.obtenerArchivo(nombreArchivo, uri -> {
+                        String urlComprobante = uri.toString();
+                        Log.d(TAG, "URL obtenida: " + urlComprobante);
 
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra("nuevo_egreso", nuevoEgreso);
-                        setResult(RESULT_OK, resultIntent);
-                        Toast.makeText(this, "Egreso guardado exitosamente", Toast.LENGTH_SHORT).show();
-                        finish();
-                    },
-                    e -> {
-                        Log.e(TAG, "Error al guardar egreso", e);
-                        Toast.makeText(this, "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        textViewUploadStatus.setText("Guardando egreso...");
+
+                        Egreso nuevoEgreso = new Egreso(id, titulo, monto, descripcion, fecha);
+                        nuevoEgreso.setComprobanteUrl(urlComprobante);
+                        nuevoEgreso.setComprobanteNombre(nombreArchivo);
+
+                        egresoRepository.guardarEgreso(nuevoEgreso,
+                                unused -> {
+                                    Log.d(TAG, "Egreso guardado exitosamente");
+                                    layoutUploadStatus.setVisibility(View.GONE);
+                                    binding.buttonGuardar.setEnabled(true);
+
+                                    Toast.makeText(this, "Egreso guardado exitosamente", Toast.LENGTH_SHORT).show();
+
+                                    Intent resultIntent = new Intent();
+                                    resultIntent.putExtra("nuevo_egreso", nuevoEgreso);
+                                    setResult(RESULT_OK, resultIntent);
+                                    finish();
+                                },
+                                e -> {
+                                    Log.e(TAG, "Error al guardar egreso", e);
+                                    layoutUploadStatus.setVisibility(View.GONE);
+                                    binding.buttonGuardar.setEnabled(true);
+                                    Toast.makeText(this, "Error al guardar egreso: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+
+                    }, e -> {
+                        Log.e(TAG, "Error al obtener URL", e);
+                        layoutUploadStatus.setVisibility(View.GONE);
+                        binding.buttonGuardar.setEnabled(true);
+                        Toast.makeText(this, "Error al obtener URL: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
+
+                } else {
+                    Log.e(TAG, "Error al subir comprobante", task.getException());
+                    layoutUploadStatus.setVisibility(View.GONE);
+                    binding.buttonGuardar.setEnabled(true);
+                    Toast.makeText(this, "Error al subir comprobante", Toast.LENGTH_LONG).show();
+                }
+            });
 
         }, e -> {
             Log.e(TAG, "Error al generar ID", e);
-            Toast.makeText(this, "Error al generar ID", Toast.LENGTH_SHORT).show();
+            layoutUploadStatus.setVisibility(View.GONE);
+            binding.buttonGuardar.setEnabled(true);
+            Toast.makeText(this, "Error al generar ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 
     private void mostrarSelectorFecha() {
         Calendar calendar = Calendar.getInstance();
 
-        // Si ya hay una fecha seleccionada, usarla como fecha inicial
         String fechaActual = binding.editTextFecha.getText().toString();
         if (!fechaActual.isEmpty()) {
             try {
@@ -162,7 +287,6 @@ public class AddEgresoActivity extends AppCompatActivity {
                     calendar.setTime(fecha);
                 }
             } catch (ParseException e) {
-                // Si hay error, usar fecha actual
                 calendar = Calendar.getInstance();
             } catch (java.text.ParseException e) {
                 throw new RuntimeException(e);
@@ -186,7 +310,6 @@ public class AddEgresoActivity extends AppCompatActivity {
     }
 
     private void mostrarConfirmacionSalida() {
-        // Verificar si hay datos ingresados
         if (hayDatosIngresados()) {
             new AlertDialog.Builder(this)
                     .setTitle("¿Salir sin guardar?")

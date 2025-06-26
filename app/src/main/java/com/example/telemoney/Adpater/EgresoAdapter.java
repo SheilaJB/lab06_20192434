@@ -19,7 +19,7 @@ public class EgresoAdapter extends  RecyclerView.Adapter<EgresoAdapter.EgresoVie
     private final OnEgresoClickListener listener;
     public interface OnEgresoClickListener {
         void onEdit(Egreso egreso);
-        void onDelete(Egreso egreso);
+        void onDownload(Egreso egreso);
     }
     public EgresoAdapter(List<Egreso> lista, OnEgresoClickListener listener) {
         this.lista = lista;
@@ -61,7 +61,7 @@ public class EgresoAdapter extends  RecyclerView.Adapter<EgresoAdapter.EgresoVie
             fecha.setText(egreso.getFecha());
 
             itemView.setOnLongClickListener(view -> {
-                listener.onDelete(egreso); // Llama al listener para eliminar el ingreso
+                listener.onDownload(egreso); // Llama al listener para eliminar el ingreso
                 return true;
             });
 

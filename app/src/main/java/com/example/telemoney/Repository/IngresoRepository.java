@@ -147,7 +147,6 @@ public class IngresoRepository {
 
         return sb.toString();
     }
-
     public void generarNuevoId(Consumer<String> callback, OnFailureListener failure) {
         try {
             String uid = obtenerUidUsuario();

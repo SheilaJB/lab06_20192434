@@ -14,20 +14,16 @@ import com.example.telemoney.R;
 import java.util.List;
 
 public class IngresoAdapter extends RecyclerView.Adapter<IngresoAdapter.IngresoViewHolder> {
-
     private List<Ingreso> lista;
     private final OnIngresoClickListener listener;
-
     public interface OnIngresoClickListener {
         void onEdit(Ingreso ingreso);
-        void onDelete(Ingreso ingreso);
+        void onDownload(Ingreso ingreso);
     }
-
     public IngresoAdapter(List<Ingreso> lista, OnIngresoClickListener listener) {
         this.lista = lista;
         this.listener = listener;
     }
-
     @NonNull
     @Override
     public IngresoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -35,18 +31,15 @@ public class IngresoAdapter extends RecyclerView.Adapter<IngresoAdapter.IngresoV
                 .inflate(R.layout.item_ingreso, parent, false);
         return new IngresoViewHolder(vista);
     }
-
     @Override
     public void onBindViewHolder(@NonNull IngresoViewHolder holder, int position) {
         Ingreso ingreso = lista.get(position);
         holder.bind(ingreso);
     }
-
     @Override
     public int getItemCount() {
         return lista.size();
     }
-
     public class IngresoViewHolder extends RecyclerView.ViewHolder {
         TextView titulo, monto, descripcion, fecha;
 
@@ -57,18 +50,15 @@ public class IngresoAdapter extends RecyclerView.Adapter<IngresoAdapter.IngresoV
             descripcion = itemView.findViewById(R.id.textViewDescripcion);
             fecha = itemView.findViewById(R.id.textViewFecha);
         }
-
         public void bind(Ingreso ingreso) {
             titulo.setText(ingreso.getTitulo());
             monto.setText(String.format("S/ %.2f", ingreso.getMonto()));
             descripcion.setText(ingreso.getDescripcion());
             fecha.setText(ingreso.getFecha());
-
             itemView.setOnLongClickListener(view -> {
-                listener.onDelete(ingreso); // Llama al listener para eliminar el ingreso
+                listener.onDownload(ingreso); // Nueva función
                 return true;
             });
-
             itemView.setOnClickListener(view -> {
                 listener.onEdit(ingreso); // Llama al listener para editar el ingreso
             });

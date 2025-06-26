@@ -68,7 +68,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Toca una tarjeta para editarlo. Mantén presionado para eliminarlo."
+                android:text="Toca una tarjeta para editarla, mantenla presionada para descargar su comprobante o deslízala hacia la izquierda para eliminarla."
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 app:layout_constraintStart_toEndOf="@id/lightbulbIcon"

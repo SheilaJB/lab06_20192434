@@ -4,10 +4,19 @@ import static android.content.ContentValues.TAG;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -15,7 +24,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.telemoney.Adpater.IngresoAdapter;
 import com.example.telemoney.Model.Ingreso;
@@ -24,7 +36,10 @@ import com.example.telemoney.databinding.ActivityIngresoBinding;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class IngresoActivity extends AppCompatActivity {
@@ -84,6 +99,7 @@ public class IngresoActivity extends AppCompatActivity {
         binding.fabAddIngreso.setOnClickListener(view -> nuevoIngreso());
         // Reciclar la vista para los Insets
         configurarRecyclerView();
+        configurarSwipe();
     }
     // Boton de Nuevo Ingreso
     private void nuevoIngreso() {
@@ -92,7 +108,6 @@ public class IngresoActivity extends AppCompatActivity {
     }
     private void configurarRecyclerView() {
         listaIngresos = new ArrayList<>();
-
         adapter = new IngresoAdapter(listaIngresos, new IngresoAdapter.OnIngresoClickListener() {
             @Override
             public void onEdit(Ingreso ingreso) {
@@ -101,34 +116,47 @@ public class IngresoActivity extends AppCompatActivity {
                 editIngresoLauncher.launch(intent);
                 Toast.makeText(IngresoActivity.this, "Editar: " + ingreso.getTitulo(), Toast.LENGTH_SHORT).show();
             }
-
             @Override
-            public void onDelete(Ingreso ingreso) {
+            public void onDownload(Ingreso ingreso) {
+                if (ingreso.getComprobanteUrl() == null || ingreso.getComprobanteUrl().isEmpty()) {
+                    Toast.makeText(IngresoActivity.this, "No hay comprobante para descargar", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 new AlertDialog.Builder(IngresoActivity.this)
-                        .setTitle("¿Eliminar ingreso?")
-                        .setMessage("¿Estás segura de que deseas eliminar \"" + ingreso.getTitulo() + "\"?")
+                        .setTitle("¿Descargar comprobante?")
+                        .setMessage("¿Deseas descargar el comprobante asociado a \"" + ingreso.getTitulo() + "\"?")
                         .setPositiveButton("Sí", (dialog, which) -> {
-                            ingresoRepository.eliminarIngreso(ingreso.getId(),
-                                    unused -> {
-                                        int index = listaIngresos.indexOf(ingreso);
-                                        if (index != -1) {
-                                            listaIngresos.remove(index);
-                                            adapter.notifyItemRemoved(index);
-                                        }
-                                        Toast.makeText(IngresoActivity.this, "Ingreso eliminado", Toast.LENGTH_SHORT).show();
-                                    },
-                                    e -> Toast.makeText(IngresoActivity.this, "Error al eliminar: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                            // Verifica permisos si estás en Android 6–9
+                           /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                                    checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 101);
+                                return;
+                            }*/
+
+                            String nombreArchivo = "comprobante_" + ingreso.getId() + ".jpg";
+                            File directorioDescargas = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                            File archivoDestino = new File(directorioDescargas, nombreArchivo);
+                            StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(ingreso.getComprobanteUrl());
+
+                            storageRef.getFile(archivoDestino)
+                                    .addOnSuccessListener(taskSnapshot -> {
+                                        Toast.makeText(IngresoActivity.this,
+                                                "Comprobante guardado en Descargas: " + nombreArchivo,
+                                                Toast.LENGTH_LONG).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(IngresoActivity.this, "Error al descargar comprobante", Toast.LENGTH_SHORT).show();
+                                        Log.e("Descarga", "Error al descargar imagen", e);
+                                    });
                         })
                         .setNegativeButton("Cancelar", null)
                         .show();
             }
 
-
         });
         binding.recyclerViewIngresos.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerViewIngresos.setAdapter(adapter);
-
-
         // Carga los ingresos desde el repositorio
         ingresoRepository = new IngresoRepository(); // Asegúrate de tener esto como atributo o aquí
         ingresoRepository.obtenerIngresos(lista -> {
@@ -140,6 +168,83 @@ public class IngresoActivity extends AppCompatActivity {
             Log.e("IngresoActivity", "Error al cargar ingresos", e);
             Toast.makeText(this, "Error al cargar ingresos", Toast.LENGTH_SHORT).show();
         });
+    }
+    private void configurarSwipe() {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                Ingreso ingreso = listaIngresos.get(position);
+
+                new AlertDialog.Builder(IngresoActivity.this)
+                        .setTitle("¿Eliminar ingreso?")
+                        .setMessage("¿Estás segura de que deseas eliminar \"" + ingreso.getTitulo() + "\" y su comprobante?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            ingresoRepository.eliminarIngreso(ingreso.getId(),
+                                    unused -> {
+                                        // ✅ Eliminar comprobante si existe
+                                        if (ingreso.getComprobanteNombre() != null && !ingreso.getComprobanteNombre().isEmpty()) {
+                                            new ServioAlmacenamiento().eliminarArchivo(
+                                                    ingreso.getComprobanteNombre(),
+                                                    success -> Log.d("Storage", "Comprobante eliminado"),
+                                                    error -> Log.e("Storage", "Error al eliminar comprobante", error)
+                                            );
+                                        }
+
+                                        listaIngresos.remove(position);
+                                        adapter.notifyItemRemoved(position);
+                                        Toast.makeText(IngresoActivity.this, "Ingreso eliminado", Toast.LENGTH_SHORT).show();
+                                    },
+                                    e -> {
+                                        Toast.makeText(IngresoActivity.this, "Error al eliminar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        adapter.notifyItemChanged(position); // Restaurar swipe
+                                    });
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> adapter.notifyItemChanged(position))
+                        .show();
+            }
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+
+                View itemView = viewHolder.itemView;
+                Paint paint = new Paint();
+
+                // Fondo rojo con bordes redondeados
+                paint.setColor(ContextCompat.getColor(IngresoActivity.this, android.R.color.holo_red_dark));
+                RectF background = new RectF(itemView.getRight() + dX, itemView.getTop() + 8,
+                        itemView.getRight() - 8, itemView.getBottom() - 8);
+                c.drawRoundRect(background, 24, 24, paint);
+
+                // Ícono de eliminar centrado
+                Drawable deleteIcon = ContextCompat.getDrawable(IngresoActivity.this, R.drawable.ic_delete);
+                if (deleteIcon != null) {
+                    int iconSize = 80;
+                    int iconMargin = (itemView.getHeight() - iconSize) / 2;
+                    int iconTop = itemView.getTop() + iconMargin;
+                    int iconRight = itemView.getRight() - iconMargin - 16;
+
+                    deleteIcon.setBounds(iconRight - iconSize, iconTop, iconRight, iconTop + iconSize);
+                    deleteIcon.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+                    deleteIcon.draw(c);
+                }
+
+                // Efecto de transparencia suave
+                float alpha = 1.0f - Math.abs(dX) / (float) itemView.getWidth() * 0.3f;
+                itemView.setAlpha(Math.max(alpha, 0.7f));
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(binding.recyclerViewIngresos);
     }
 
     private final ActivityResultLauncher<Intent> addIngresoLauncher =
